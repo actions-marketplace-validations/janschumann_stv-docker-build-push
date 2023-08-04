@@ -41,6 +41,7 @@ runs:
 
   - name: Restore Docker cache
     run: docker-cache-restore.sh
+    shell: bash
     continue-on-error: true
 
   - name: Build and push
@@ -53,3 +54,4 @@ runs:
 
   - name: Save Docker cache
     run: docker-cache-create.sh
+    shell: bash
