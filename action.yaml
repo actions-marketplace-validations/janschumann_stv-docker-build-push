@@ -47,7 +47,10 @@ runs:
       key: 'docker-$RUNNER_OS-cache'
 
   - name: Restore Docker cache
-    run: docker-cache-restore.sh
+    run: |
+      if [ -f "$GITHUB_WORKSPACE/docker/cache.tar" ]; then
+        docker load -i "$GITHUB_WORKSPACE/docker/cache.tar"
+      fi
     shell: bash
     continue-on-error: true
 
@@ -60,5 +63,8 @@ runs:
       labels: ${{ steps.meta.outputs.labels }}
 
   - name: Save Docker cache
-    run: docker-cache-create.sh
+    run: |
+      DOCKER_TAG=${DOCKER_METADATA_OUTPUT_TAGS##\n*}
+      mkdir -p "$GITHUB_WORKSPACE/docker"
+      docker save -o "$GITHUB_WORKSPACE/docker/cache.tar" ${DOCKER_TAG}
     shell: bash
