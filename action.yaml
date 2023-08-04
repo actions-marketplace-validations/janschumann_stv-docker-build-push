@@ -8,6 +8,13 @@ inputs:
   image_repository:
     required: true
     type: string
+  acr_username:
+    required: true
+    type: string
+  acr_password:
+    required: true
+    type: string
+
 
 runs:
   using: "composite"
@@ -30,8 +37,8 @@ runs:
     uses: azure/docker-login@v1
     with:
       login-server: ${{ inputs.container_registry }}
-      username: ${{ secrets.ACR_USERNAME }}
-      password: ${{ secrets.ACR_PASSWORD }}
+      username: ${{ inputs.acr_username }}
+      password: ${{ inputs.acr_password }}
 
   - name: Cache Docker layers
     uses: actions/cache@v2
