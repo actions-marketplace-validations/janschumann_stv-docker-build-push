@@ -1,0 +1,55 @@
+name: stv-docker-build-push
+description: Action to build an image from the current directory and push it to an Azure Container Registry
+
+inputs:
+  container_registry:
+    required: true
+    type: string
+  image_repository:
+    required: true
+    type: string
+
+runs:
+  using: "composite"
+  steps:
+  - name: Docker meta
+    id: meta
+    uses: docker/metadata-action@v4
+    with:
+      images: |
+        ${{ inputs.container_registry }}/${{ inputs.image_repository }}
+      tags: |
+        type=ref,event=branch
+        type=ref,event=pr
+        type=semver,pattern={{version}}
+        type=semver,pattern={{major}}.{{minor}}
+        type=semver,pattern={{major}}
+        type=sha
+
+  - name: Login to Azure Container Registry
+    uses: azure/docker-login@v1
+    with:
+      login-server: ${{ inputs.container_registry }}
+      username: ${{ secrets.ACR_USERNAME }}
+      password: ${{ secrets.ACR_PASSWORD }}
+
+  - name: Cache Docker layers
+    uses: actions/cache@v2
+    with:
+      path: $GITHUB_WORKSPACE/docker
+      key: 'docker-$RUNNER_OS-cache'
+
+  - name: Restore Docker cache
+    run: docker-cache-restore.sh
+    continue-on-error: true
+
+  - name: Build and push
+    uses: docker/build-push-action@v4
+    with:
+      context: .
+      push: ${{ github.event_name != 'pull_request' }}
+      tags: ${{ steps.meta.outputs.tags }}
+      labels: ${{ steps.meta.outputs.labels }}
+
+  - name: Save Docker cache
+    run: docker-cache-create.sh
